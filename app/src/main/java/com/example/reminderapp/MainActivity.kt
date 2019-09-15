@@ -1,5 +1,7 @@
 package com.example.reminderapp
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 
+const val ADD_REMINDER_REQUEST_CODE = 100
+
 class MainActivity : AppCompatActivity() {
 
     private val reminders = arrayListOf<Reminder>()
@@ -23,11 +27,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
+        //configure the onclick listener of the floating action button
         fab.setOnClickListener { view ->
-            // Code to add to the floating button onClickListener:
-            val reminder = etReminder.text.toString()
-            addReminder(reminder)
-
+            startAddActivity()
         }
 
         //initialize the view
@@ -65,18 +67,19 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    /**
-     * Function to add a new reminder to the collection/ recycleView
-     */
-    private fun addReminder(reminder: String){
-        if(reminder.isNotBlank()){
-            reminders.add(Reminder(reminder))
-            reminderAdapter.notifyDataSetChanged()
-            etReminder.text?.clear()
-        }else{
-            Snackbar.make(etReminder, "You must fill the input field!", Snackbar.LENGTH_SHORT).show()
-        }
-    }
+    //TODO cleanup
+//    /**
+//     * Function to add a new reminder to the collection/ recycleView
+//     */
+//    private fun addReminder(reminder: String){
+//        if(reminder.isNotBlank()){
+//            reminders.add(Reminder(reminder))
+//            reminderAdapter.notifyDataSetChanged()
+//            etReminder.text?.clear()
+//        }else{
+//            Snackbar.make(etReminder, "You must fill the input field!", Snackbar.LENGTH_SHORT).show()
+//        }
+//    }
 
     /***
      * this method is used to bind to the onSwipe and onMove method to the recycler view.
@@ -101,4 +104,31 @@ class MainActivity : AppCompatActivity() {
         }
         return ItemTouchHelper(callback)
     }
+
+    private fun startAddActivity() {
+        val intent = Intent(this, Add_Activity::class.java)
+
+        //start the activity saying we expect a result and pass a unique request code so it know where to return the result?
+        startActivityForResult(intent, ADD_REMINDER_REQUEST_CODE)
+    }
+
+    //This method is called when a result is retrieved from another activity
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        //check if th result was successful
+        if (resultCode == Activity.RESULT_OK) {
+            //search the matching request code (the on we used when making the intent
+            when (requestCode) {
+                //when we find a match we know for which intent this result is (in case we have made multiple)
+                ADD_REMINDER_REQUEST_CODE -> {
+                    //retrieve / parse the reminder object from the response and add it to the recyclerView.
+                    val reminder = data!!.getParcelableExtra<Reminder>(EXTRA_REMINDER)
+                    reminders.add(reminder)
+                    reminderAdapter.notifyDataSetChanged()
+                }
+            }
+        }
+    }
+
+
+
 }
